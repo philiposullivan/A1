@@ -1,13 +1,112 @@
 <!doctype html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IS1111 Resources</title></head>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IS1111 A1 Resources</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 24px; line-height: 1.4; }
+    h1 { margin-bottom: 6px; }
+    .muted { color: #666; margin-top: 0; }
+    section { margin: 28px 0; }
+    pre { background:#0f172a; color:#e5e7eb; padding:16px; overflow:auto; border-radius:10px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 10px; vertical-align: top; }
+    th { background: #f3f4f6; position: sticky; top: 0; }
+    .toolbar a { margin-right: 12px; }
+  </style>
+</head>
 <body>
-<h1>IS1111 Resources</h1>
-<ul>
-  <li><a href="files/A1_INSTRUCTIONS.txt">A1 Instructions</a></li>
-  <li><a href="files/A1_rubric.txt">A1 Rubric</a></li>
-  <li><a href="files/inventory_v1_template.py">Inventory Python Template</a></li>
-</ul>
+  <h1>IS1111 A1 Resources</h1>
+  <p class="muted">Full content shown below. Raw file links included for Copilot + downloads.</p>
+
+  <div class="toolbar">
+    <a href="files/A1_INSTRUCTIONS.txt" target="_blank" rel="noopener">Raw: Instructions</a>
+    <a href="files/A1_rubric.txt" target="_blank" rel="noopener">Raw: Rubric</a>
+    <a href="files/inventory_v1_template.py" target="_blank" rel="noopener">Raw: Template (.py)</a>
+  </div>
+
+  <section>
+    <h2>A1 Instructions</h2>
+    <pre><code id="instructions">Loading…</code></pre>
+  </section>
+
+  <section>
+    <h2>A1 Rubric</h2>
+    <div id="rubricStatus">Loading…</div>
+    <div style="overflow:auto; max-width:100%;">
+      <table id="rubricTable"></table>
+    </div>
+  </section>
+
+  <section>
+    <h2>inventory_v1_template.py</h2>
+    <pre><code id="template">Loading…</code></pre>
+  </section>
+
+  <script>
+    async function loadText(selector, url) {
+      const el = document.querySelector(selector);
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(url + " → HTTP " + res.status);
+      el.textContent = await res.text();
+    }
+
+    // Parse a tab-separated file into an HTML table.
+    function tsvToTable(tsv, tableEl) {
+      const lines = tsv
+        .replace(/\r/g, "")
+        .split("\n")
+        .filter(line => line.trim().length > 0);
+
+      const rows = lines.map(line => line.split("\t"));
+      const maxCols = Math.max(...rows.map(r => r.length));
+
+      // Build table
+      tableEl.innerHTML = "";
+
+      rows.forEach((cells, rIdx) => {
+        const tr = document.createElement("tr");
+
+        // pad short rows so borders line up
+        while (cells.length < maxCols) cells.push("");
+
+        cells.forEach((cell, cIdx) => {
+          const isHeaderRow = (rIdx === 0);
+          const cellEl = document.createElement(isHeaderRow ? "th" : "td");
+          cellEl.textContent = cell.trim();
+          tr.appendChild(cellEl);
+        });
+
+        tableEl.appendChild(tr);
+      });
+    }
+
+    (async () => {
+      try {
+        await loadText("#instructions", "files/A1_INSTRUCTIONS.txt");
+      } catch (e) {
+        document.querySelector("#instructions").textContent = String(e);
+      }
+
+      try {
+        const res = await fetch("files/A1_rubric.txt", { cache: "no-store" });
+        if (!res.ok) throw new Error("files/A1_rubric.txt → HTTP " + res.status);
+        const tsv = await res.text();
+        tsvToTable(tsv, document.querySelector("#rubricTable"));
+        document.querySelector("#rubricStatus").textContent = "";
+      } catch (e) {
+        document.querySelector("#rubricStatus").textContent =
+          "Could not load rubric as a table. Check the file is tab-separated.\n" + e;
+      }
+
+      try {
+        await loadText("#template", "files/inventory_v1_template.py");
+      } catch (e) {
+        document.querySelector("#template").textContent = String(e);
+      }
+    })();
+  </script>
 </body>
 </html>
