@@ -1,0 +1,468 @@
+=============================================================================
+ASSIGNMENT 4 INSTRUCTIONS
+Object-Oriented Programming (Version 4.0 - Final)
+=============================================================================
+
+Your task: Convert your inventory system from functions and dictionaries
+to object-oriented design using two classes: Product and Inventory.
+
+=============================================================================
+CODE REUSE FROM A3
+=============================================================================
+
+IMPORTANT: You are NOT rewriting your entire inventory system - you are
+converting the core data structures (products) to classes.
+
+To reduce workload and allow you to focus on OOP concepts, you will:
+  - Reuse ALL functions from A2 and A3 (provided in inventory_operations_template.py, 
+    main_v4_template.py, data_handler.py, and transaction_operations.py)
+  - Focus your effort on writing just TWO classes
+  - Complete TODOs in inventory_operations.py to use class methods
+
+PROVIDED FILES:
+  1. data_handler.py (PROVIDED - adapted from A3)
+     - All file operations (load_inventory, save_inventory, load_transactions, save_transactions)
+     - All export functions (export_inventory_to_csv, export_low_stock_to_csv, generate_text_report)
+     - Updated to work with Product and Inventory objects
+  
+  2. transaction_operations.py (PROVIDED - from A2)
+     - log_transaction() - adds transaction to list
+     - view_transaction_log() - displays recent transactions
+     - Reused unchanged from A2
+  
+  3. inventory_operations_template.py (template to complete)
+     - Menu handler functions from A3 with TODO markers
+     - update_stock_menu(), add_product_menu(), search_products_menu(), etc.
+     - Complete TODO sections to use class methods
+  
+  4. main_v4_template.py (template provided)
+     - get_valid_float() and get_valid_int() - from A2
+     - display_menu() and handle_export_menu() - updated for A4
+     - main() function - imports and calls menu handlers
+     - Rename to main.py
+	 - Complete documentation & self-reflection sections at the bottom
+
+YOUR MAIN TASKS:
+  1. Create product.py with Product class (~100 lines)
+  2. Create inventory.py with Inventory class (~100 lines)
+  3. Rename inventory_operations_template.py to inventory_operations.py and complete TODO sections (~200 lines updated)
+  4. Rename main_v4_template.py to main.py
+  5. Add references, AI statement & self-reflection
+  
+Note: data_handler.py and transaction_operations.py are PROVIDED - you do NOT need to create or edit these files.
+
+TOTAL CODING WORK: ~400 lines total (~200 new class code + ~200 updated handler code)
+
+This approach allows you to:
+  - Demonstrate OOP mastery through class design
+  - Apply encapsulation, properties, and validation
+  - Convert between objects and dictionaries for file storage
+
+=============================================================================
+LEARNING OBJECTIVES
+=============================================================================
+
+By completing this assignment, you will demonstrate your ability to:
+  - Design classes that model real-world entities (Product class)
+  - Use private attributes and properties for encapsulation
+  - Implement methods that operate on object state
+  - Create classes that manage collections of objects (Inventory class)
+  - Convert objects to/from dictionaries for storage (serialisation)
+  - Adapt existing code to work with objects
+
+=============================================================================
+WHY OBJECT-ORIENTED PROGRAMMING?
+=============================================================================
+
+Objects bundle data and behaviour together, making code:
+  - More intuitive (objects mirror real-world concepts)
+  - Easier to maintain (changes isolated to classes)
+  - More reusable (classes can be used in other projects)
+  - Safer (encapsulation prevents accidental data corruption)
+
+Before (dictionaries in A2/A3):
+  product = {"name": "Milk", "price": 1.50, "quantity": 20}
+  # Anyone can set invalid values:
+  product["price"] = -10  # Negative price!
+  product["quantity"] = "twenty"  # Wrong type!
+
+After (objects in A4):
+  product = Product("P001", "Milk", "Dairy", 1.50, 20, 10)
+  product.price = -10  # Raises ValueError: Price cannot be negative
+  product.update_stock(-5)  # Validates before updating
+
+=============================================================================
+PROJECT STRUCTURE
+=============================================================================
+
+Your submission should contain these files:
+
+  inventory_manager_v4/              - Assignment folder
+      ├── product.py                 - Product class (YOU WRITE THIS)
+      ├── inventory.py               - Inventory class (YOU WRITE THIS)
+      ├── inventory_operations.py    - Menu handlers (RENAME & COMPLETE provided template)
+      ├── main.py                    - Main programme (RENAME template - no changes)
+      ├── data_handler.py            - File operations (PROVIDED)
+      ├── transaction_operations.py  - Transaction logging (PROVIDED)
+      ├── inventory.json             - Sample data file
+      └── transactions.json          - Transaction log file
+
+=============================================================================
+STEP 1: Create the Product class (product.py)
+=============================================================================
+
+The Product class represents a single product with validation.
+
+File: product.py
+
+REQUIRED ATTRIBUTES (all private):
+  - product_id (str) - Unique identifier, read-only
+  - name (str) - Product name, validated
+  - category (str) - Product category, validated
+  - price (float) - Price per unit, must be >= 0
+  - quantity (int) - Current stock quantity, must be >= 0
+  - min_stock (int) - Minimum stock level, must be >= 0
+
+CONSTRUCTOR REQUIREMENTS:
+  - Accept all 6 parameters
+  - Use property setters for validated attributes (not direct assignment)
+  - This ensures validation happens during initialisation
+
+PROPERTIES (getters) - all attributes need @property decorators:
+  - product_id (read-only, no setter)
+  - name
+  - category
+  - price
+  - quantity
+  - min_stock
+
+PROPERTIES (setters with validation):
+  - name: Cannot be empty or only whitespace
+  - category: Cannot be empty or only whitespace
+  - price: Cannot be negative
+  - quantity: Cannot be negative
+  - min_stock: Cannot be negative
+
+REQUIRED METHODS:
+
+  update_stock(amount_change)
+    - Parameters: amount_change (int) - amount to add (positive) or remove (negative)
+    - Raises ValueError if resulting quantity would be negative
+    - Updates quantity (private attribute)
+  
+  get_value()
+    - Returns: Total value of the product
+  
+  is_low_stock()
+    - Returns: True if product needs reordering, False otherwise
+  
+  to_dict()
+    - Returns: Dictionary with all attributes EXCEPT product_id
+    - Used for JSON storage
+  
+  from_dict(product_id, data)
+    - Class method (@classmethod)
+    - Parameters: product_id (str), data (dict)
+    - Returns: New Product object
+    - Used for loading from JSON
+  
+  __str__()
+    - Returns: Readable string representation of the product
+    - Should include: ID, name, category, price, stock levels
+
+=============================================================================
+STEP 2: Create the Inventory class (inventory.py)
+=============================================================================
+
+The Inventory class manages a collection of Product objects.
+
+File: inventory.py
+
+REQUIRED IMPORTS:
+  Import the Product class
+
+REQUIRED ATTRIBUTES:
+  - _products (dict) - Dictionary mapping product_id to Product objects
+
+CONSTRUCTOR:
+  - Initialise empty _products dictionary
+
+REQUIRED METHODS:
+
+  add_product(name, category, price, quantity, min_stock)
+    - Generate new product ID
+    - Create Product object
+    - Add to _products dictionary
+    - Returns: product_id (str)
+  
+  remove_product(product_id)
+    - Remove product from inventory
+    - Returns: Removed Product object or None if not found
+  
+  get_product(product_id)
+    - Returns: Product object or None if not found
+  
+  get_all_products()
+    - Returns: List of all Product objects
+  
+  find_by_name(name)
+    - Case-insensitive exact name match
+    - Returns: product_id or None if not found
+  
+  search_by_name(search_term)
+    - Case-insensitive partial match
+    - Returns: List of matching Product objects
+  
+  search_by_category(category)
+    - Case-insensitive exact category match
+    - Returns: List of matching Product objects
+  
+  get_low_stock_products()
+    - Returns: List of Product objects where is_low_stock() is True
+  
+  generate_category_report()
+    - Returns: Dictionary with category statistics
+    - For each category: product count and total value
+  
+  calculate_total_value()
+    - Returns: Total value of all inventory
+  
+  _generate_id()
+    - Private method (underscore prefix)
+    - Generates next unique product ID
+    - Returns: str
+  
+  __len__()
+    - Returns: Number of products in inventory
+    - Allows using len(inventory)
+
+=============================================================================
+PROVIDED: data_handler.py (File Operations from A3)
+=============================================================================
+
+The data_handler.py file is PROVIDED with all file operations adapted from
+A3 to work with your Product and Inventory objects.
+
+You do NOT need to create or modify this file.
+
+What's in data_handler.py (all adapted from A3):
+  - Functions for loading/saving inventory (works with Inventory objects)
+  - Functions for loading/saving transactions (works with lists)
+  - Functions for exporting to CSV files
+  - Function for generating formatted text reports
+
+How it works:
+  - Loading converts JSON dictionaries to Product objects using from_dict()
+  - Saving converts Product objects to dictionaries using to_dict()
+  - Export functions use Inventory methods and Product properties
+  
+Import this module in main.py to access these functions.
+
+=============================================================================
+STEP 3: Complete inventory_operations.py menu handlers
+=============================================================================
+
+The template includes your menu handler functions from A3 with the structure
+and reusable code already written. You need to UPDATE the marked TODO sections
+to use Product and Inventory class methods instead of dictionary operations.
+
+File: inventory_operations.py (rename from inventory_operations_template.py)
+
+WHAT'S ALREADY PROVIDED (~60-70% of code):
+  - All UI prompts and print statements
+  - Input validation calls
+  - Control flow (if/else, loops)
+  - Transaction logging calls
+  - Error messages
+
+WHAT YOU NEED TO CHANGE (~30-40% of code):
+  - Dictionary access → Product properties
+  - Dictionary loops → Inventory methods
+  - Manual ID generation → Inventory.add_product()
+  - Direct dictionary updates → Property setters and methods
+  - Manual searches → Inventory search methods
+  - Manual calculations → Product and Inventory methods
+
+=============================================================================
+STEP 4: Rename File & Complete Documentation and Self-reflection
+=============================================================================
+
+The CODE in the main.py template is COMPLETE - NO changes needed.
+
+WHAT YOU NEED TO DO:
+  - Rename main_v4_template.py to main.py
+  - Add references with usage note
+  - Add full AI statement
+  - Add self-reflection
+
+What's in main.py:
+  - Input validation functions (get_valid_float, get_valid_int)
+  - Menu display functions
+  - main() function that imports and calls menu handlers from inventory_operations
+  - All imports and structure ready to use
+
+===================================================
+HOW TRANSACTIONS WORK IN A4
+=============================================================================
+
+Transactions remain as a simple list (like A2/A3), NOT a class.
+
+The transaction_operations module (PROVIDED) contains functions for:
+  - Logging transactions to the list
+  - Viewing recent transactions
+
+In your main.py:
+  - Import the transaction_operations module
+  - Call the appropriate functions when products are added, updated, or removed
+  - Pass the required parameters (transactions list, type, product details)
+
+=============================================================================
+HOW FILE OPERATIONS WORK IN A4
+=============================================================================
+
+All file operations are provided in data_handler.py (adapted from A3).
+
+The data_handler module contains functions for:
+  - Loading inventory from JSON (returns Inventory object)
+  - Saving inventory to JSON (converts objects to dictionaries)
+  - Loading transactions from JSON (returns list)
+  - Saving transactions to JSON
+  - Exporting data to CSV files
+  - Generating formatted text reports
+
+=============================================================================
+MENU STRUCTURE (same as A3)
+=============================================================================
+
+Main menu (11 options):
+
+  === Murphy's General Store - Inventory System ===
+  1. View All Products
+  2. Add New Product
+  3. Update Stock (Sale/Delivery)
+  4. Update Product Details
+  5. Remove Product
+  6. Search Products
+  7. View Low Stock Alerts
+  8. View Category Report
+  9. View Transaction Log
+  10. Export Reports
+  11. Save & Exit
+
+Export submenu (5 options):
+
+  --- Export Reports ---
+  1. Export inventory to CSV
+  2. Export low stock report to CSV
+  3. Generate formatted text report
+  4. Export all reports
+  5. Cancel
+
+=============================================================================
+IMPLEMENTATION CHECKLIST
+=============================================================================
+
+File Structure:
+[ ] inventory_manager_v4/ - assignment folder
+[ ] product.py - Product class (YOU WRITE)
+[ ] inventory.py - Inventory class (YOU WRITE)
+[ ] inventory_operations.py - Menu handlers (YOU COMPLETE TEMPLATE)
+[ ] main.py - Main programme (RENAME TEMPLATE & COMPLETE BOTTOM SECTIONS)
+[ ] data_handler.py - File operations (PROVIDED - include in ZIP)
+[ ] transaction_operations.py - Transaction logging (PROVIDED - include in ZIP)
+
+Product class (product.py):
+[ ] Private attributes
+[ ] Properties (getters) for all attributes
+[ ] Setters with validation for name, category, price, quantity, min_stock
+[ ] update_stock(amount_change) method
+[ ] get_value() method
+[ ] is_low_stock() method
+[ ] to_dict() method
+[ ] from_dict() class method
+[ ] __str__() method
+
+Inventory class (inventory.py):
+[ ] Private products dictionary
+[ ] add_product() - returns product_id
+[ ] remove_product() - returns Product or None
+[ ] get_product() - returns Product or None
+[ ] get_all_products() - returns list of Products
+[ ] find_by_name() - returns product_id or None
+[ ] search_by_name() - returns list of Products
+[ ] search_by_category() - returns list of Products
+[ ] get_low_stock_products() - returns list of Products
+[ ] generate_category_report() - returns dict
+[ ] calculate_total_value() - returns float
+[ ] _generate_id() - private method
+[ ] __len__() method
+
+inventory_operations.py:
+[ ] Completed TODO sections in all 9 menu handler functions
+[ ] Uses Product properties instead of dictionary access
+[ ] Uses Inventory methods instead of dictionary loops
+[ ] Imports transaction_operations and calls functions
+
+main.py:
+[ ] File renamed from main_v4_template.py
+[ ] References included with usage note
+[ ] Full AI Statement included
+[ ] Self-reflection statement included
+
+=============================================================================
+COMMON MISTAKES TO AVOID
+=============================================================================
+
+1. Not using private attributes
+   - Use underscore prefix for private attributes
+   - Access through properties, not directly
+
+2. Forgetting @property decorator
+   - Properties need the @property decorator
+   - Both getters and setters require decorators
+
+3. Not validating in setters
+   - Property setters must validate input
+   - Raise appropriate errors for invalid values
+
+4. Accessing private attributes directly
+   - Don't bypass encapsulation by accessing private attributes directly
+   - Always use properties for access
+
+5. Forgetting @classmethod for from_dict
+   - Class methods need the @classmethod decorator
+   - First parameter should be cls, not self
+
+6. Not calling setters in __init__
+   - In constructor, assign to property names (not private attributes) 
+     to trigger setter validation
+   - This ensures validation happens during object creation
+
+=============================================================================
+SUBMISSION REQUIREMENTS
+=============================================================================
+
+File names:
+  - product.py (YOU WRITE THIS)
+  - inventory.py (YOU WRITE THIS)
+  - inventory_operations.py (YOU COMPLETE THE TEMPLATE)
+  - main.py (RENAME TEMPLATE  & COMPLETE BOTTOM SECTIONS - no code changes)
+  - data_handler.py (PROVIDED - include in submission)
+  - transaction_operations.py (PROVIDED - include in submission)
+  - inventory.json (optional sample data)
+  - transactions.json (optional sample data)
+
+Each .py file must include:
+  - Header comment with: name, student ID, date, description
+  - Class/module docstrings
+  - Method/function docstrings
+
+Only main.py needs:
+  - References section
+  - AI statement
+  - Self-reflection (2-3 sentences)
+
+Save all files in the same folder, compress the folder,
+and submit the ZIP file.
+
+=============================================================================
